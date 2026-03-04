@@ -1,0 +1,11 @@
+name: NexusDB
+main: io.hearlov.nexus.db.Main
+version: "1.0"
+api: "2.0.0"
+author: Hearlov
+description: H2 DB and MySQL Driver API in NukkitX
+
+permissions:
+  nexusdb.about:
+    description: "Shows about NexusDB"
+    default: true
