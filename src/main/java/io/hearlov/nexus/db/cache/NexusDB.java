@@ -2,14 +2,13 @@ package io.hearlov.nexus.db.cache;
 
 import io.hearlov.nexus.db.Main;
 
-import io.hearlov.nexus.db.scheduler.DBTask;
-import io.hearlov.nexus.db.scheduler.DBThread;
-import io.hearlov.nexus.db.scheduler.H2Thread;
-import io.hearlov.nexus.db.scheduler.MySQLThread;
+import io.hearlov.nexus.db.scheduler.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 
@@ -21,6 +20,7 @@ public class NexusDB{
         public final String dbPath;
 
         public final BlockingQueue<DBTask> queue = new LinkedBlockingQueue<>();
+        public final Queue<DBReturn> mainqueue = new ConcurrentLinkedQueue<>();
         public final DBThread thread;
 
     /**
@@ -37,7 +37,7 @@ public class NexusDB{
         this.scheduleName = scheduleName;
         this.dbPath = null;
 
-        this.thread = new MySQLThread(scheduleName, queue, host, port, database, username, password);
+        this.thread = new MySQLThread(scheduleName, queue, mainqueue, host, port, database, username, password);
         this.thread.start();
 
         Main.getInstance().register(this);
@@ -53,14 +53,63 @@ public class NexusDB{
         this.scheduleName = scheduleName;
         this.dbPath = dbPath;
 
-        this.thread = new H2Thread(scheduleName, queue, dbPath);
+        this.thread = new H2Thread(scheduleName, queue, mainqueue, dbPath);
         this.thread.start();
 
         Main.getInstance().register(this);
     }
 
+    /**
+     * Creates a NexusDB instance using an H2 file database.
+     *
+     * @param scheduleName The name of the scheduler (and the database thread).
+     * @param dbPath       The file path for the H2 database.
+     * @param multiaccess  If {@code true}, starts H2 in server mode — allowing multiple threads
+     *                     and external applications to access the same database simultaneously.
+     *                     <br><br>
+     *                     ⚠️ <b>Note:</b> H2 databases started in server mode may have a slightly
+     *                     longer initial connection time compared to standard embedded mode.
+     */
+    public NexusDB(String scheduleName, String dbPath, boolean multiaccess) {
+        this.dbType = DBType.H2;
+        this.scheduleName = scheduleName;
+        this.dbPath = dbPath;
+
+        this.thread = new H2Thread(scheduleName, queue, mainqueue, dbPath, multiaccess);
+        this.thread.start();
+
+        Main.getInstance().register(this);
+    }
+
+    /**
+     * Adds a database task to the execution queue.
+     * The query will be executed asynchronously on the database thread.
+     * The result will be delivered via the given callback, also on the database thread.
+     *
+     * @param query    The SQL query to execute.
+     * @param params   The parameters to bind to the query. Use {@code null} if there are no parameters.
+     * @param callback Called on the <b>database thread</b> when the query completes.
+     *                 Receives the result as a list of rows, where each row is a column-name-to-value map.
+     */
     public void addTask(String query, Object[] params, Consumer<List<Map<String, Object>>> callback){
-        queue.add(new DBTask(query, params, callback));
+        queue.add(new DBTask(query, params, callback, null));
+    }
+
+    /**
+     * Adds a database task to the execution queue with an additional main thread callback.
+     * The query will be executed asynchronously on the database thread.
+     * The result will be delivered to both callbacks — first on the database thread,
+     * then forwarded to the main thread callback for safe interaction with server-side APIs.
+     *
+     * @param query        The SQL query to execute.
+     * @param params       The parameters to bind to the query. Use {@code null} if there are no parameters.
+     * @param callback     Called on the <b>database thread</b> when the query completes.
+     *                     Receives the result as a list of rows, where each row is a column-name-to-value map.
+     * @param maincallback Called on the <b>main thread</b> after the database callback.
+     *                     Use this when you need to interact with the server API (e.g. modifying players, worlds).
+     */
+    public void addTask(String query, Object[] params, Consumer<List<Map<String, Object>>> callback, Consumer<List<Map<String, Object>>> maincallback){
+        queue.add(new DBTask(query, params, callback, maincallback));
     }
 
     public void stop(){

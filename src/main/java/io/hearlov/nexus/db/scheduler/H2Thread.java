@@ -12,17 +12,29 @@ public class H2Thread extends DBThread{
     private final BlockingQueue<DBTask> queue;
     private final String dbPath;
     private final String scheduleName;
+    private final boolean multaccess;
+    private final Queue<DBReturn> mainqueue;
 
-    public H2Thread(String scheduleName, BlockingQueue<DBTask> queue, String dbPath){
+    public H2Thread(String scheduleName, BlockingQueue<DBTask> queue, Queue<DBReturn> mainqueue, String dbPath, boolean multiaccess){
         this.queue = queue;
         this.dbPath = "jdbc:h2:" + dbPath;
         this.scheduleName = scheduleName;
+        this.multaccess = multiaccess;
+        this.mainqueue = mainqueue;
+    }
+
+    public H2Thread(String scheduleName, BlockingQueue<DBTask> queue, Queue<DBReturn> mainqueue, String dbPath){
+        this.queue = queue;
+        this.dbPath = "jdbc:h2:" + dbPath;
+        this.scheduleName = scheduleName;
+        this.multaccess = false;
+        this.mainqueue = mainqueue;
     }
 
     @Override
     public void run(){
-        // H2 için bağlantı string'i - AUTO_SERVER çoklu erişim için
-        String url = dbPath /*+ ";AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1"*/;
+        //If you use "Multi Use" the DB, Activate AutoServer
+        String url = dbPath + (this.multaccess ? ";AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1" : "");
 
         JdbcDataSource ds = new JdbcDataSource();
         ds.setURL(url);
@@ -42,12 +54,16 @@ public class H2Thread extends DBThread{
                         task.callback().accept(results);
                     }
 
+                    if (task.maincallback() != null) {
+                        this.mainqueue.offer(new DBReturn(task.maincallback(), results));
+                    }
+
                 }catch (InterruptedException e){
                     Thread.currentThread().interrupt();
-                    System.out.println(scheduleName + ": Database thread sonlandırılıyor...");
+                    System.out.println(scheduleName + ": Database thread is terminating...");
                     break;
                 }catch (SQLException e){
-                    System.err.println("SQL Hatası: " + e.getMessage());
+                    System.err.println("SQL Error: " + e.getMessage());
                 }
             }
 
@@ -60,14 +76,14 @@ public class H2Thread extends DBThread{
         List<Map<String, Object>> resultList = new ArrayList<>();
 
         try(PreparedStatement stmt = conn.prepareStatement(task.query())){
-            // Parametreleri SQL sorgusuna güvenli bir şekilde ekle
+            // Add parameters safely to the SQL query
             if (task.params() != null) {
                 for (int i = 0; i < task.params().length; i++) {
                     stmt.setObject(i + 1, task.params()[i]);
                 }
             }
 
-            // Eğer sorgu SELECT ise (ResultSet döner)
+            // If the query is SELECT (it returns a ResultSet)
             String queryUpper = task.query().trim().toUpperCase();
             if (queryUpper.startsWith("SELECT") || queryUpper.startsWith("SHOW")){
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -83,7 +99,7 @@ public class H2Thread extends DBThread{
                     }
                 }
             } else {
-                // UPDATE, INSERT, DELETE, CREATE, ALTER gibi işlemler
+                // Operations such as UPDATE, INSERT, DELETE, CREATE, ALTER
                 int affectedRows = stmt.executeUpdate();
                 resultList.add(Map.of("affected_rows", affectedRows));
             }

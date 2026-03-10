@@ -15,8 +15,9 @@ public class MySQLThread extends DBThread{
     private final String username;
     private final String password;
     private final String scheduleName;
+    private final Queue<DBReturn> mainqueue;
 
-    public MySQLThread(String scheduleName, BlockingQueue<DBTask> queue, String host, int port, String database, String username, String password){
+    public MySQLThread(String scheduleName, BlockingQueue<DBTask> queue, Queue<DBReturn> mainqueue, String host, int port, String database, String username, String password){
         this.queue = queue;
         this.host = host;
         this.port = port;
@@ -24,6 +25,7 @@ public class MySQLThread extends DBThread{
         this.username = username;
         this.password = password;
         this.scheduleName = scheduleName;
+        this.mainqueue = mainqueue;
     }
 
     @Override
@@ -35,19 +37,19 @@ public class MySQLThread extends DBThread{
         ds.setUser(username);
         ds.setPassword(password);
 
-        // MySQL bağlantı parametreleri
+        //MySQL Connection Properties
         try {
             ds.setUseSSL(false);
             ds.setAllowPublicKeyRetrieval(true);
             ds.setAutoReconnect(true);
             ds.setCharacterEncoding("UTF-8");
         } catch (SQLException e) {
-            System.err.println("MySQL DataSource yapılandırma hatası: " + e.getMessage());
+            System.err.println("MySQL Database Start error: " + e.getMessage());
         }
 
-        System.out.println(scheduleName + ": MySQL veritabanı thread'i başlatılıyor...");
+        System.out.println(scheduleName + ": MySQL Database starting...");
         try (Connection conn = ds.getConnection()) {
-            System.out.println(scheduleName + ": MySQL veritabanı thread'i başlatıldı!");
+            System.out.println(scheduleName + ": MySQL Database Thread started!");
 
             while (!Thread.currentThread().isInterrupted()) {
                 try {
@@ -59,17 +61,21 @@ public class MySQLThread extends DBThread{
                         task.callback().accept(results);
                     }
 
+                    if (task.maincallback() != null) {
+                        this.mainqueue.offer(new DBReturn(task.maincallback(), results));
+                    }
+
                 }catch (InterruptedException e){
                     Thread.currentThread().interrupt();
-                    System.out.println(scheduleName + ": Database thread sonlandırılıyor...");
+                    System.out.println(scheduleName + ": Database thread is terminating...");
                     break;
                 }catch (SQLException e){
-                    System.err.println("SQL Hatası: " + e.getMessage());
+                    System.err.println("SQL Error: " + e.getMessage());
                 }
             }
 
         } catch (SQLException e) {
-            System.err.println("MySQL veritabanı bağlantısı kurulamadı: " + e.getMessage());
+            System.err.println("A connection to the MySQL database could not be established: " + e.getMessage());
         }
     }
 
@@ -77,14 +83,14 @@ public class MySQLThread extends DBThread{
         List<Map<String, Object>> resultList = new ArrayList<>();
 
         try(PreparedStatement stmt = conn.prepareStatement(task.query())){
-            // Parametreleri SQL sorgusuna güvenli bir şekilde ekle
+            // Add parameters safely to the SQL query
             if (task.params() != null) {
                 for (int i = 0; i < task.params().length; i++) {
                     stmt.setObject(i + 1, task.params()[i]);
                 }
             }
 
-            // Eğer sorgu SELECT ise (ResultSet döner)
+            // If the query is SELECT (it returns a ResultSet)
             String queryUpper = task.query().trim().toUpperCase();
             if (queryUpper.startsWith("SELECT") || queryUpper.startsWith("SHOW")){
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -100,7 +106,7 @@ public class MySQLThread extends DBThread{
                     }
                 }
             } else {
-                // UPDATE, INSERT, DELETE, CREATE, ALTER gibi işlemler
+                // Operations such as UPDATE, INSERT, DELETE, CREATE, ALTER
                 int affectedRows = stmt.executeUpdate();
                 resultList.add(Map.of("affected_rows", affectedRows));
             }

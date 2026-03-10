@@ -7,5 +7,6 @@ import java.util.function.Consumer;
 public record DBTask(
         String query,
         Object[] params,
-        Consumer<List<Map<String, Object>>> callback
+        Consumer<List<Map<String, Object>>> callback,
+        Consumer<List<Map<String, Object>>> maincallback
 ) {}

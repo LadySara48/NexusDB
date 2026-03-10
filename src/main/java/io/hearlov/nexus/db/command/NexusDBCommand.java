@@ -14,15 +14,16 @@ public class NexusDBCommand extends Command {
     @Override
     public boolean execute(CommandSender sender, String commandLabel, String[] args){
         Main base = Main.getInstance();
-        sender.sendMessage("§8§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        sender.sendMessage(" §6§lNEXUS DATABASE §8| §7v" + base.getDescription().getVersion());
-        sender.sendMessage("");
-        sender.sendMessage(" §7▪ §fAuthor: §e" + String.join(", ", base.getDescription().getAuthors()));
-        sender.sendMessage(" §7▪ §fAPI Version: §b" + base.getDescription().getCompatibleAPIs().getFirst() + "+");
-        sender.sendMessage(" §7▪ §fActive Databases: §a" + base.getList().size());
-        sender.sendMessage("");
-        sender.sendMessage(" §7" + base.getDescription().getDescription());
-        sender.sendMessage("§8§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        String message = "\n§8§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
+                " §6§lNEXUS DATABASE §8| §7v" + base.getDescription().getVersion() + "\n" +
+                "\n" +
+                " §7▪ §fAuthor: §e" + String.join(", ", base.getDescription().getAuthors()) + "\n" +
+                " §7▪ §fAPI Version: §b" + base.getDescription().getCompatibleAPIs().getFirst() + "+\n" +
+                " §7▪ §fActive Databases: §a" + base.getList().size() + "\n" +
+                "\n" +
+                " §7" + base.getDescription().getDescription() + "\n" +
+                "§8§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+        sender.sendMessage(message);
         return true;
     }
 }

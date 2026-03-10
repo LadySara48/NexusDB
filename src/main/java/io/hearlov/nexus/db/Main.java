@@ -22,10 +22,12 @@ public class Main extends PluginBase{
 
     @Override
     public void onEnable() {
+        this.saveDefaultConfig();
         getServer().getCommandMap().register("hearlovnexusdb", new NexusDBCommand());
         getServer().getScheduler().scheduleDelayedTask(this, () -> {
+            if(errorflow.isEmpty()) return;
             String sync = String.join(", ", errorflow);
-            System.out.println(sync + "bu DataBase araçları başlatılamadı!");
+            System.out.println(sync + "These database tools could not be started.!");
         }, 20 * 5);
     }
 
