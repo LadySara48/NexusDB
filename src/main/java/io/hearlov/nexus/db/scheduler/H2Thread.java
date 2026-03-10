@@ -23,13 +23,13 @@ public class H2Thread extends DBThread{
         this.mainqueue = mainqueue;
     }
 
-    public H2Thread(String scheduleName, BlockingQueue<DBTask> queue, Queue<DBReturn> mainqueue, String dbPath){
+    /*public H2Thread(String scheduleName, BlockingQueue<DBTask> queue, Queue<DBReturn> mainqueue, String dbPath){
         this.queue = queue;
         this.dbPath = "jdbc:h2:" + dbPath;
         this.scheduleName = scheduleName;
         this.multaccess = false;
         this.mainqueue = mainqueue;
-    }
+    }*/
 
     @Override
     public void run(){

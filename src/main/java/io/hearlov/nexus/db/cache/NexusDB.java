@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 
+@SuppressWarnings("unused")
 public class NexusDB{
 
         public final String scheduleName;
@@ -53,7 +54,7 @@ public class NexusDB{
         this.scheduleName = scheduleName;
         this.dbPath = dbPath;
 
-        this.thread = new H2Thread(scheduleName, queue, mainqueue, dbPath);
+        this.thread = new H2Thread(scheduleName, queue, mainqueue, dbPath, Main.getInstance().defaultserver);
         this.thread.start();
 
         Main.getInstance().register(this);
