@@ -59,6 +59,18 @@ db.addTask("SELECT * FROM money WHERE playername = ?", new Object[]{playername},
 
 ---
 
+### Dont Forget!
+
+Don't forget to add the dependencies to your plugin.<br>
+plugin.yml
+
+```
+depends:
+- NexusDB
+```
+
+---
+
 ## Roadmap
 
 - [x] H2 support
