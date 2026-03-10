@@ -4,6 +4,7 @@ import cn.nukkit.plugin.PluginBase;
 import io.hearlov.nexus.db.cache.NexusDB;
 import io.hearlov.nexus.db.command.NexusDBCommand;
 import io.hearlov.nexus.db.scheduler.DBThread;
+import io.hearlov.nexus.db.scheduler.QueueControlTask;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,8 @@ public class Main extends PluginBase{
     public static final List<String> workflow = new CopyOnWriteArrayList<>();
     public static final List<String> errorflow = new CopyOnWriteArrayList<>();
 
+    public boolean defaultserver = false; //Generally default: false
+
     private static Main instance;
     @Override
     public void onLoad(){instance = this;}
@@ -23,12 +26,18 @@ public class Main extends PluginBase{
     @Override
     public void onEnable() {
         this.saveDefaultConfig();
+
+        this.defaultserver = this.getConfig().getBoolean("H2ServerNormally", false);
+
         getServer().getCommandMap().register("hearlovnexusdb", new NexusDBCommand());
         getServer().getScheduler().scheduleDelayedTask(this, () -> {
             if(errorflow.isEmpty()) return;
             String sync = String.join(", ", errorflow);
             System.out.println(sync + "These database tools could not be started.!");
         }, 20 * 5);
+        getServer().getScheduler().scheduleDelayedRepeatingTask(new QueueControlTask(),
+                120,
+                this.getConfig().getInt("TaskTick", 10));
     }
 
     public void register(NexusDB db){
@@ -44,7 +53,11 @@ public class Main extends PluginBase{
     }
 
     public NexusDB createH2(String scheduleName, String dbPath){
-        return new NexusDB(scheduleName, dbPath);
+        return new NexusDB(scheduleName, dbPath, this.defaultserver);
+    }
+
+    public NexusDB createH2(String scheduleName, String dbPath, boolean multiaccess){
+        return new NexusDB(scheduleName, dbPath, multiaccess);
     }
 
 }

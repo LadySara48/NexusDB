@@ -1,0 +1,15 @@
+---
+
+# How often (in ticks) the scheduler checks for pending main-thread callbacks.
+# The scheduler processes results from DB threads and runs them on the main thread.
+# 10 = 500ms, 20 = 1s
+TaskTick: 10
+
+# Default multiaccess mode for H2 databases.
+# If true, H2 will start in server mode by default — allowing multiple threads/apps to access the same DB.
+# If false, H2 runs in standard embedded (file) mode by default.
+# This value is used automatically when multiaccess is not explicitly set in the NexusDB constructor.
+# Note: Server mode has a slightly longer initial connection time. (See NexusDB constructor docs)
+H2ServerNormally: false
+
+...
