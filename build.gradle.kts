@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "io.hearlov.nexus.db"
-version = "1.1-SNAPSHOT"
+version = "1.1.2-SNAPSHOT"
 
 java {
     toolchain {
