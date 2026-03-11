@@ -3,7 +3,6 @@ package io.hearlov.nexus.db;
 import cn.nukkit.plugin.PluginBase;
 import io.hearlov.nexus.db.cache.NexusDB;
 import io.hearlov.nexus.db.command.NexusDBCommand;
-import io.hearlov.nexus.db.scheduler.DBThread;
 import io.hearlov.nexus.db.scheduler.QueueControlTask;
 
 import java.util.ArrayList;
@@ -51,14 +50,17 @@ public class Main extends PluginBase{
         return list;
     }
 
+    @SuppressWarnings("unused")
     public NexusDB createSQL(String scheduleName, String host, int port, String database, String username, String password){
         return new NexusDB(scheduleName, host, port, database, username, password);
     }
 
+    @SuppressWarnings("unused")
     public NexusDB createH2(String scheduleName, String dbPath){
         return new NexusDB(scheduleName, dbPath, this.defaultserver);
     }
 
+    @SuppressWarnings("unused")
     public NexusDB createH2(String scheduleName, String dbPath, boolean multiaccess){
         return new NexusDB(scheduleName, dbPath, multiaccess);
     }
