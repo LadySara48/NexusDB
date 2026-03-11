@@ -41,7 +41,28 @@ public class NexusDB{
         this.thread = new MySQLThread(scheduleName, queue, mainqueue, host, port, database, username, password);
         this.thread.start();
 
-        Main.getInstance().register(this);
+        Main.getInstance().register(this, true);
+    }
+
+    /**
+     * for MySQL database
+     * @param scheduleName Scheduler name
+     * @param host Host IP
+     * @param port Host Port
+     * @param database DB Name
+     * @param username DB Username
+     * @param password DB User password
+     * @param querymain If you use QueryMainThread = true (Default)
+     */
+    public NexusDB(String scheduleName, String host, int port, String database, String username, String password, boolean querymain){
+        this.dbType = DBType.MySQL;
+        this.scheduleName = scheduleName;
+        this.dbPath = null;
+
+        this.thread = new MySQLThread(scheduleName, queue, mainqueue, host, port, database, username, password);
+        this.thread.start();
+
+        Main.getInstance().register(this, querymain);
     }
 
     /**
@@ -57,7 +78,7 @@ public class NexusDB{
         this.thread = new H2Thread(scheduleName, queue, mainqueue, dbPath, Main.getInstance().defaultserver);
         this.thread.start();
 
-        Main.getInstance().register(this);
+        Main.getInstance().register(this, true);
     }
 
     /**
@@ -79,7 +100,30 @@ public class NexusDB{
         this.thread = new H2Thread(scheduleName, queue, mainqueue, dbPath, multiaccess);
         this.thread.start();
 
-        Main.getInstance().register(this);
+        Main.getInstance().register(this, true);
+    }
+
+    /**
+     * Creates a NexusDB instance using an H2 file database.
+     *
+     * @param scheduleName The name of the scheduler (and the database thread).
+     * @param dbPath       The file path for the H2 database.
+     * @param multiaccess  If {@code true}, starts H2 in server mode — allowing multiple threads
+     *                     and external applications to access the same database simultaneously.
+     *                     <br><br>
+     *                     ⚠️ <b>Note:</b> H2 databases started in server mode may have a slightly
+     *                     longer initial connection time compared to standard embedded mode.
+     * @param querymain    If you use QueryMainThread = true (Default)
+     */
+    public NexusDB(String scheduleName, String dbPath, boolean multiaccess, boolean querymain) {
+        this.dbType = DBType.H2;
+        this.scheduleName = scheduleName;
+        this.dbPath = dbPath;
+
+        this.thread = new H2Thread(scheduleName, queue, mainqueue, dbPath, multiaccess);
+        this.thread.start();
+
+        Main.getInstance().register(this, querymain);
     }
 
     /**

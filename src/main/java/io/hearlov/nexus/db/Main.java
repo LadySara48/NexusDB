@@ -16,6 +16,8 @@ public class Main extends PluginBase{
     public static final List<String> workflow = new CopyOnWriteArrayList<>();
     public static final List<String> errorflow = new CopyOnWriteArrayList<>();
 
+    private final List<NexusDB> queryPoolThread = new ArrayList<>();
+
     public boolean defaultserver = false; //Generally default: false
 
     private static Main instance;
@@ -40,8 +42,9 @@ public class Main extends PluginBase{
                 this.getConfig().getInt("TaskTick", 10));
     }
 
-    public void register(NexusDB db){
+    public void register(NexusDB db, boolean queryMainThread){
         list.add(db);
+        if(queryMainThread) queryPoolThread.add(db);
     }
 
     public List<NexusDB> getList(){
