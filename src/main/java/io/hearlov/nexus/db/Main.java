@@ -15,7 +15,7 @@ public class Main extends PluginBase{
     public static final List<String> workflow = new CopyOnWriteArrayList<>();
     public static final List<String> errorflow = new CopyOnWriteArrayList<>();
 
-    private final List<NexusDB> queryPoolThread = new ArrayList<>();
+    public final List<NexusDB> queryPoolThread = new ArrayList<>();
 
     public boolean defaultserver = false; //Generally default: false
 

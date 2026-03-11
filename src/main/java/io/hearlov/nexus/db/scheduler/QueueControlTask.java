@@ -10,7 +10,7 @@ public class QueueControlTask extends Task {
 
     @Override
     public void onRun(int currentTick) {
-        Iterator<NexusDB> iterator = Main.getInstance().getList().iterator();
+        Iterator<NexusDB> iterator = Main.getInstance().queryPoolThread.iterator();
         while(iterator.hasNext()) {
             NexusDB db = iterator.next();
 
